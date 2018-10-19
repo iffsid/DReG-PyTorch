@@ -71,7 +71,7 @@ def train(epoch):
       # Compute grad for inference net
       model.freeze_generator()
       x_logit, z, mu, logvar = model(data, k=args.train_k)
-      loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
+      loss = -model_.compute_elbo_dreg(data, x_logit, z, mu, logvar)
       loss.backward()
       model.unfreeze_generator()
 

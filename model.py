@@ -114,11 +114,11 @@ def compute_elbo_dreg(x, x_logit, z, mu, logvar):
   logqz = torch.sum(logqz, dim=-1)
 
   logw = logpx + logpz - logqz
-  w = torch.exp(w)
-  assert len(w.size()) == 3
+  assert len(logw.size()) == 2
 
   # Don't backprop through w_i / (\sum_i w_i)
   with torch.no_grad():
-    reweight = (w / torch.sum(w, dim=0, keepdim=True)) ** 2
+    reweight = torch.exp(
+        logw - torch.logsumexp(logw, dim=0, keepdim=True)).pow(2)
 
-  return torch.mean(torch.sum(reweight * logw, dim=0), axis=0)
+  return torch.mean(torch.sum(reweight * logw, dim=0), dim=0)
