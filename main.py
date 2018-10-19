@@ -56,8 +56,8 @@ def train(epoch):
     data = data.to(device)
     optimizer.zero_grad()
     if args.dreg:
-      # Potential optimizations here to avoid forwarding twice per update
-      # TF graph based impl would have better speed performance overriding
+      # TODO: Potential optimizations to avoid forwarding twice per update;
+      # TF graph based impl would have better speed performance by overriding
       # the gradient graph
 
       # Compute grad for generator
