@@ -26,6 +26,8 @@ parser.add_argument('--test-k', type=int, default=1,
                     help='number of iwae samples during testing')
 parser.add_argument('--latent-dim', type=int, default=20,
                     help='number of latent variables')
+parser.add_argument('--dreg', action='store_true',
+                    help='Use DReG for inference network gradients.')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -53,12 +55,36 @@ def train(epoch):
   for batch_idx, (data, _) in enumerate(train_loader):
     data = data.to(device)
     optimizer.zero_grad()
-    x_logit, z, mu, logvar = model(data, k=args.train_k)
-    loss = -model_.compute_elbo(
-        x=data, x_logit=x_logit, z=z, mu=mu, logvar=logvar)
-    loss.backward()
-    train_loss += loss.item()
-    optimizer.step()
+    if args.dreg:
+      # Potential optimizations here to avoid forwarding twice per update
+      # TF graph based impl would have better performace with overrided
+      # gradient graph
+
+      # Compute grad for generator
+      model.freeze_inference()
+      x_logit, z, mu, logvar = model(data, k=args.train_k)
+      loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
+      loss.backward()
+      train_loss += loss.item()
+      model.unfreeze_inference()
+
+      # Compute grad for inference net
+      model.freeze_generator()
+      x_logit, z, mu, logvar = model(data, k=args.train_k)
+      loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
+      loss.backward()
+      model.unfreeze_generator()
+
+      # Update all params
+      optimizer.step()
+    else:
+      x_logit, z, mu, logvar = model(data, k=args.train_k)
+      loss = -model_.compute_elbo(
+          x=data, x_logit=x_logit, z=z, mu=mu, logvar=logvar)
+      loss.backward()
+      train_loss += loss.item()
+      optimizer.step()
+
     if batch_idx % args.log_interval == 0:
       print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
           epoch, batch_idx * len(data), len(train_loader.dataset),
@@ -82,7 +108,7 @@ def test(epoch):
         n = min(data.size(0), 8)
         comparison = torch.cat(
             [data[:n],
-            x_logit.view(args.batch_size * args.test_k, 1, 28, 28)[:n]])
+             x_logit.view(args.batch_size * args.test_k, 1, 28, 28)[:n]])
         save_image(comparison.cpu(),
                    '../results/reconstruction_' + str(epoch) + '.png', nrow=n)
 
