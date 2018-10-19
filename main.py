@@ -1,6 +1,6 @@
 from __future__ import print_function
 import argparse
-
+import os
 import time
 import torch
 from torch import nn, optim
@@ -57,8 +57,8 @@ def train(epoch):
     optimizer.zero_grad()
     if args.dreg:
       # Potential optimizations here to avoid forwarding twice per update
-      # TF graph based impl would have better performace with overrided
-      # gradient graph
+      # TF graph based impl would have better speed performance overriding
+      # the gradient graph
 
       # Compute grad for generator
       model.freeze_inference()
@@ -117,7 +117,6 @@ def test(epoch):
 
 
 if __name__ == "__main__":
-  import os
   if not os.path.exists("../results"):
     os.makedirs("../results")
 
