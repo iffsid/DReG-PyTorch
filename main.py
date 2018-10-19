@@ -2,6 +2,10 @@ from __future__ import print_function
 import argparse
 import os
 import time
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import torch
 from torch import nn, optim
 from torchvision import datasets, transforms
@@ -27,7 +31,8 @@ parser.add_argument('--test-k', type=int, default=1,
 parser.add_argument('--latent-dim', type=int, default=20,
                     help='number of latent variables')
 parser.add_argument('--dreg', action='store_true',
-                    help='Use DReG for inference network gradients.')
+                    help='use DReG for inference network gradients')
+parser.add_argument('--ablation', action='store_true')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -65,7 +70,7 @@ def train(epoch):
       x_logit, z, mu, logvar = model(data, k=args.train_k)
       loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
       loss.backward()
-      train_loss += loss.item()
+      train_loss += -loss.item()
       model.unfreeze_inference()
 
       # Compute grad for inference net
@@ -79,10 +84,9 @@ def train(epoch):
       optimizer.step()
     else:
       x_logit, z, mu, logvar = model(data, k=args.train_k)
-      loss = -model_.compute_elbo(
-          x=data, x_logit=x_logit, z=z, mu=mu, logvar=logvar)
+      loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
       loss.backward()
-      train_loss += loss.item()
+      train_loss += -loss.item()
       optimizer.step()
 
     if batch_idx % args.log_interval == 0:
@@ -91,8 +95,11 @@ def train(epoch):
           100. * batch_idx / len(train_loader),
           loss.item()))
 
+  avg_loss = train_loss / (batch_idx + 1)
   print('====> Epoch: {} Average loss: {:.4f}'.format(
-        epoch, train_loss / (batch_idx + 1)))
+        epoch, avg_loss))
+
+  return avg_loss
 
 
 def test(epoch):
@@ -114,17 +121,49 @@ def test(epoch):
 
   test_loss /= (i + 1)
   print('====> Test set loss: {:.4f}'.format(test_loss))
+  return test_loss
 
 
-if __name__ == "__main__":
-  if not os.path.exists("../results"):
-    os.makedirs("../results")
-
+def main():
+  train_stats, test_stats = [], []
   for epoch in range(1, args.epochs + 1):
-    train(epoch)
-    test(epoch)
+    train_stats.append(train(epoch))
+    test_stats.append(test(epoch))
     with torch.no_grad():
       sample = torch.randn(64, 20).to(device)
       sample = model.decode(sample).cpu()
       save_image(sample.view(64, 1, 28, 28),
                  '../results/sample_' + str(epoch) + '.png')
+
+  return train_stats, test_stats
+
+
+if __name__ == '__main__':
+  if not os.path.exists('../results'):
+    os.makedirs('../results')
+
+  if args.ablation:
+    # Compare usual iwae with dreg iwae
+    args.dreg = False
+    regular_train, regular_test = main()
+
+    args.dreg = True
+    dreg_train, dreg_test = main()
+
+    # Compare curve
+    plt.figure()
+    x = list(range(1, args.epochs + 1))
+    plt.plot(x, regular_train, label='regular')
+    plt.plot(x, dreg_train, label='dreg')
+    plt.title('training time iwae bound')
+    plt.legend()
+    plt.savefig('../results/training_curve.png')
+
+    plt.figure()
+    plt.plot(x, regular_test, label='regular')
+    plt.plot(x, dreg_test, label='dreg')
+    plt.title('training time iwae bound')
+    plt.legend()
+    plt.savefig('../results/test_curve.png')
+  else:
+    main()
