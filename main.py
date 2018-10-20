@@ -76,8 +76,8 @@ def train(epoch):
       # Compute grad for inference net
       model.freeze_generator()
       x_logit, z, mu, logvar = model(data, k=args.train_k)
-      loss = -model_.compute_elbo_dreg(data, x_logit, z, mu, logvar)
-      loss.backward()
+      loss_ = -model_.compute_elbo_dreg(data, x_logit, z, mu, logvar)
+      loss_.backward()
       model.unfreeze_generator()
 
       # Update all params
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(x, regular_test, label='regular')
     plt.plot(x, dreg_test, label='dreg')
-    plt.title('training time iwae bound')
+    plt.title('test time iwae bound')
     plt.legend()
     plt.savefig('../results/test_curve.png')
   else:
