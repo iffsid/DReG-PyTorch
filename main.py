@@ -28,6 +28,8 @@ parser.add_argument('--train-k', type=int, default=1,
                     help='number of iwae samples during training')
 parser.add_argument('--test-k', type=int, default=1,
                     help='number of iwae samples during testing')
+parser.add_argument('--learning-rate', type=float, default=1e-3,
+                    help='learning rate for Adam')
 parser.add_argument('--latent-dim', type=int, default=20,
                     help='number of latent variables')
 parser.add_argument('--dreg', action='store_true',
@@ -51,7 +53,7 @@ test_loader = torch.utils.data.DataLoader(
 
 
 model = model_.VAE().to(device)
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
 
 def train(epoch):
@@ -59,6 +61,10 @@ def train(epoch):
   train_loss = 0
   for batch_idx, (data, _) in enumerate(train_loader):
     data = data.to(device)
+    # Dynamic binarization
+    sample = torch.rand(data.size()).to(device)
+    data = (sample < data).float()
+
     optimizer.zero_grad()
     if args.dreg:
       # TODO: Potential optimizations to avoid forwarding twice per update;
