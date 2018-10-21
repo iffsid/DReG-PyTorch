@@ -11,7 +11,8 @@ DReG is a variance reduction technique proposed in the paper "Doubly Reparameter
 * Potential extensions and applications in sequence models and model-based RL
 
 ## Variance Reduction Visualization
-In progress...
+![](figs/training_curve.png)
+![](figs/test_curve.png)
 
 ## TODOs
 - [ ] RWS case
