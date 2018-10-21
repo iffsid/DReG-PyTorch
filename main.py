@@ -159,8 +159,8 @@ if __name__ == '__main__':
     # Compare curve
     plt.figure()
     x = list(range(1, args.epochs + 1))
-    plt.plot(x, regular_train, label='regular')
-    plt.plot(x, dreg_train, label='dreg')
+    plt.plot(x, regular_train, label='Regular')
+    plt.plot(x, dreg_train, label='DReG')
     plt.title('training time iwae elbo bound (k={})'.format(args.train_k))
     plt.ylabel("ELBO")
     plt.xlabel("epoch")
@@ -168,8 +168,8 @@ if __name__ == '__main__':
     plt.savefig('../results/training_curve.png')
 
     plt.figure()
-    plt.plot(x, regular_test, label='regular')
-    plt.plot(x, dreg_test, label='dreg')
+    plt.plot(x, regular_test, label='Regular')
+    plt.plot(x, dreg_test, label='DReG')
     plt.title('test time iwae elbo bound (k={})'.format(args.test_k))
     plt.ylabel("ELBO")
     plt.xlabel("epoch")
