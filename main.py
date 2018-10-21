@@ -161,14 +161,14 @@ if __name__ == '__main__':
     x = list(range(1, args.epochs + 1))
     plt.plot(x, regular_train, label='regular')
     plt.plot(x, dreg_train, label='dreg')
-    plt.title('training time iwae bound')
+    plt.title('training time iwae bound (k={})'.format(args.train_k))
     plt.legend()
     plt.savefig('../results/training_curve.png')
 
     plt.figure()
     plt.plot(x, regular_test, label='regular')
     plt.plot(x, dreg_test, label='dreg')
-    plt.title('test time iwae bound')
+    plt.title('test time iwae bound (k={})'.format(args.test_k))
     plt.legend()
     plt.savefig('../results/test_curve.png')
   else:
