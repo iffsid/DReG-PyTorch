@@ -104,8 +104,7 @@ def compute_elbo_dreg(x, x_logit, z, mu, logvar):
   logpz = utils.normal_logpdf(z, zeros, zeros)
 
   # Gradient only go to \phi through z
-  with torch.no_grad():
-    mu_stop, logvar_stop = mu, logvar
+  mu_stop, logvar_stop = mu.detach(), logvar.detach()
 
   logqz = utils.normal_logpdf(z, mu_stop, logvar_stop)
 
