@@ -123,7 +123,7 @@ def test(epoch):
             [data[:n],
              x_logit.view(args.batch_size * args.test_k, 1, 28, 28)[:n]])
         save_image(comparison.cpu(),
-                   '../results/reconstruction_' + str(epoch) + '.png', nrow=n)
+                   './results/reconstruction_' + str(epoch) + '.png', nrow=n)
 
   test_loss /= (i + 1)
   print('====> Test set loss: {:.4f}'.format(test_loss))
@@ -139,14 +139,14 @@ def main():
       sample = torch.randn(64, 20).to(device)
       sample = model.decode(sample).cpu()
       save_image(sample.view(64, 1, 28, 28),
-                 '../results/sample_' + str(epoch) + '.png')
+                 './results/sample_' + str(epoch) + '.png')
 
   return train_stats, test_stats
 
 
 if __name__ == '__main__':
-  if not os.path.exists('../results'):
-    os.makedirs('../results')
+  if not os.path.exists('./results'):
+    os.makedirs('./results')
 
   if args.ablation:
     # Compare usual iwae with dreg iwae
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     plt.ylabel("ELBO")
     plt.xlabel("epoch")
     plt.legend()
-    plt.savefig('../results/training_curve.png')
+    plt.savefig('./results/training_curve.png')
 
     plt.figure()
     plt.plot(x, regular_test, label='Regular')
@@ -174,6 +174,6 @@ if __name__ == '__main__':
     plt.ylabel("ELBO")
     plt.xlabel("epoch")
     plt.legend()
-    plt.savefig('../results/test_curve.png')
+    plt.savefig('./results/test_curve.png')
   else:
     main()
