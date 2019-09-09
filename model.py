@@ -96,7 +96,6 @@ def compute_elbo(x, x_logit, z, mu, logvar):
 
 
 def compute_elbo_dreg(x, x_logit, z, mu, logvar):
-  # Call this function for inference network gradients
   # Assume all input tensors have extra 0-th dim except x
   x = x.view(-1, 784)
   logpx = utils.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
@@ -117,7 +116,7 @@ def compute_elbo_dreg(x, x_logit, z, mu, logvar):
 
   # Don't backprop through w_i / (\sum_i w_i)
   with torch.no_grad():
-    reweight = torch.exp(
-        logw - torch.logsumexp(logw, dim=0, keepdim=True)).pow(2)
+    reweight = torch.exp(logw - torch.logsumexp(logw, dim=0, keepdim=True))
+    z.register_hook(lambda grad: reweight.unsqueeze(-1) * grad)
 
   return torch.mean(torch.sum(reweight * logw, dim=0), dim=0)
