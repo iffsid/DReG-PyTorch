@@ -1,0 +1,3 @@
+#!/bin/bash
+
+python main.py --log-interval 500  --train-k 50 --test-k 1000 --ablation
