@@ -55,7 +55,6 @@ test_loader = torch.utils.data.DataLoader(
 model = model_.VAE().to(device)
 optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
-
 def train(epoch):
   model.train()
   train_loss = 0
@@ -128,9 +127,15 @@ if __name__ == '__main__':
 
   if args.ablation:
     # Compare usual iwae with dreg iwae
+    torch.manual_seed(args.seed)
+    model = model_.VAE().to(device)
+    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     args.dreg = False
     regular_train, regular_test = main()
 
+    torch.manual_seed(args.seed)
+    model = model_.VAE().to(device)
+    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     args.dreg = True
     dreg_train, dreg_test = main()
 
