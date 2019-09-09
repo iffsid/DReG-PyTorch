@@ -66,34 +66,12 @@ def train(epoch):
     data = (sample < data).float()
 
     optimizer.zero_grad()
-    if args.dreg:
-      # TODO: Potential optimizations to avoid forwarding twice per update;
-      # TF graph based impl would have better speed performance by overriding
-      # the gradient graph
-
-      # Compute grad for generator
-      model.freeze_inference()
-      x_logit, z, mu, logvar = model(data, k=args.train_k)
-      loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
-      loss.backward()
-      train_loss += -loss.item()
-      model.unfreeze_inference()
-
-      # Compute grad for inference net
-      model.freeze_generator()
-      x_logit, z, mu, logvar = model(data, k=args.train_k)
-      loss_ = -model_.compute_elbo_dreg(data, x_logit, z, mu, logvar)
-      loss_.backward()
-      model.unfreeze_generator()
-
-      # Update all params
-      optimizer.step()
-    else:
-      x_logit, z, mu, logvar = model(data, k=args.train_k)
-      loss = -model_.compute_elbo(data, x_logit, z, mu, logvar)
-      loss.backward()
-      train_loss += -loss.item()
-      optimizer.step()
+    x_logit, z, mu, logvar = model(data, k=args.train_k)
+    loss = -model_.compute_elbo_dreg(data, x_logit, z, mu, logvar) if args.dreg \
+      else -model_.compute_elbo(data, x_logit, z, mu, logvar)
+    loss.backward()
+    train_loss += -loss.item()
+    optimizer.step()
 
     if batch_idx % args.log_interval == 0:
       print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
