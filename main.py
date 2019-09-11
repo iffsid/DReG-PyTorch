@@ -65,9 +65,9 @@ def train(epoch):
     data = (sample < data).float()
 
     optimizer.zero_grad()
-    x_logit, z, mu, logvar = model(data, k=args.train_k)
-    loss = -model_.compute_elbo_dreg(data, x_logit, z, mu, logvar) if args.dreg \
-      else -model_.compute_elbo(data, x_logit, z, mu, logvar)
+    qz_x, px_z, z = model(data, k=args.train_k)
+    obj = model_.compute_elbo_dreg if args.dreg else model_.compute_elbo
+    loss = -obj(data, qz_x, px_z, z)
     loss.backward()
     train_loss += -loss.item()
     optimizer.step()
@@ -91,14 +91,12 @@ def test(epoch):
   with torch.no_grad():
     for i, (data, _) in enumerate(test_loader):
       data = data.to(device)
-      x_logit, z, mu, logvar = model(data, k=args.test_k)
-      test_loss += model_.compute_elbo(
-          x=data, x_logit=x_logit, z=z, mu=mu, logvar=logvar).item()
+      qz_x, px_z, z = model(data, k=args.test_k)
+      test_loss += model_.compute_elbo(data, qz_x, px_z, z).item()
       if i == 0:
         n = min(data.size(0), 8)
-        comparison = torch.cat(
-            [data[:n],
-             x_logit.view(args.batch_size * args.test_k, 1, 28, 28)[:n]])
+        comparison = torch.cat([data[:n],
+                                px_z.logits.view(args.batch_size * args.test_k, 1, 28, 28)[:n]])
         save_image(comparison.cpu(),
                    './results/reconstruction_' + str(epoch) + '.png', nrow=n)
 
